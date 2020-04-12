@@ -75,9 +75,9 @@ class TrainingDataPreprocessor:
         self.aug = imgaug.AugmentorList([
             CustomResize(cfg.PREPROC.TRAIN_SHORT_EDGE_SIZE, cfg.PREPROC.MAX_SIZE),
             imgaug.RandomChooseAug([
-                imgaug.Flip(horiz=True),
-                imgaug.Flip(vert=True),
-                imgaug.Rotation(max_deg=45.0)
+                imgaug.Flip(horiz = True),
+                imgaug.Flip(vert = True),
+                imgaug.Rotation(max_deg = 180.0, step_deg = 15.0, center_range = (0.5, 0.5))
                 ])
         ])
 
