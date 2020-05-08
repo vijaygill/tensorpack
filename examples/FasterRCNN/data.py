@@ -76,7 +76,7 @@ class TrainingDataPreprocessor:
             CustomResize(cfg.PREPROC.TRAIN_SHORT_EDGE_SIZE, cfg.PREPROC.MAX_SIZE)
             , imgaug.Flip(horiz = True)
             , imgaug.Flip(vert = True)
-            , imgaug.RandomApplyAug(imgaug.Rotation(max_deg = 180.0, step_deg = 15.0, center_range = (0.5, 0.5)), prob = 0.25)
+            , imgaug.RandomApplyAug(imgaug.Rotation(max_deg = 180.0, step_deg = 15.0, center_range = (0.5, 0.5)), prob = 1.0)
         ])
 
     def __call__(self, roidb):
