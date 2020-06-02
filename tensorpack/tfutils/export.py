@@ -97,7 +97,7 @@ class ModelExporter(object):
 
         Args:
             filename (str): path for export directory
-            tags (tuple): tuple of user specified tags. Defaults to "SERVING".
+            tags (tuple): tuple of user specified tags. Defaults to just "SERVING".
             signature_name (str): name of signature for prediction
 
         Note:
@@ -114,8 +114,8 @@ class ModelExporter(object):
             https://github.com/tensorflow/serving/blob/master/tensorflow_serving/g3doc/signature_defs.md
         """
         if tags is None:
-            tags = [(tf.saved_model.SERVING if get_tf_version_tuple() >= (1, 12)
-                    else tf.saved_model.tag_constants.SERVING)]
+            tags = (tf.saved_model.SERVING if get_tf_version_tuple() >= (1, 12)
+                    else tf.saved_model.tag_constants.SERVING, )
 
         self.graph = self.config._maybe_create_graph()
         with self.graph.as_default():
