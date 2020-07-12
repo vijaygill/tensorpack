@@ -149,9 +149,10 @@ class SyncMultiGPUParameterServerBuilder(DataParallelBuilder):
             a list, contains the return values of `tower_fn` on each tower.
         """
         raw_devices = ['/gpu:{}'.format(k) for k in self.towers]
-        if self.ps_device == 'gpu':
+        if self.ps_device == 'gpu' or get_tf_version_tuple() >= (2, 0):
             devices = [LeastLoadedDeviceSetter(d, raw_devices) for d in raw_devices]
         else:
+            # TODO not working in TF2 - cause model to run on CPUs
             devices = [tf.train.replica_device_setter(
                 worker_device=d, ps_device='/cpu:0', ps_tasks=1) for d in raw_devices]
 
@@ -204,6 +205,8 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
         super(SyncMultiGPUReplicatedBuilder, self).__init__(towers)
         self._average = average
         assert mode in ['nccl', 'cpu', 'hierarchical'], mode
+        if get_tf_version_tuple() >= (2, 0) and mode == 'cpu':
+            mode = 'nccl'  # cpu mode causes the entire model to get located on cpu
         self._mode = mode
 
         if self._mode == 'hierarchical' and len(towers) != 8:
@@ -313,9 +316,9 @@ class SyncMultiGPUReplicatedBuilder(DataParallelBuilder):
         Copy values of variables on GPU 0 to other GPUs.
         """
         # literally all variables, because it's better to sync optimizer-internal variables as well
-        all_vars = tf.global_variables() + tf.local_variables()
+        all_vars = tfv1.global_variables() + tfv1.local_variables()
         var_by_name = {v.name: v for v in all_vars}
-        trainable_names = {x.name for x in tf.trainable_variables()}
+        trainable_names = {x.name for x in tfv1.trainable_variables()}
         post_init_ops = []
 
         def log_failure(name, reason):
