@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # File:
 
-from tensorpack.compat import tfv1 as tf
+from tensorpack import tfv1 as tf
 from tensorpack import ModelDesc
 from tensorpack.models import GlobalAvgPooling, l2_regularizer, regularize_cost
 from tensorpack.tfutils import optimizer
@@ -218,7 +218,7 @@ class ResNetFPNModel(GeneralizedRCNN):
         return ret
 
     def slice_feature_and_anchors(self, p23456, anchors):
-        for i, stride in enumerate(cfg.FPN.ANCHOR_STRIDES):
+        for i in range(len(cfg.FPN.ANCHOR_STRIDES)):
             with tf.name_scope('FPN_slice_lvl{}'.format(i)):
                 anchors[i] = anchors[i].narrow_to(p23456[i])
 
