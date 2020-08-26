@@ -50,15 +50,15 @@ If you expect higher speed, please read
 http://tensorpack.readthedocs.io/tutorial/performance-tuning.html
 before posting.
 
-If you expect the model to converge / work better, note that we do not help you on how to train a new model.
+If you expect the model to converge / work better, note that we do not help you on how to improve a model.
 Only in one of the two conditions can we help with it:
 (1) You're unable to reproduce the results documented in tensorpack examples.
-(2) It appears to be a tensorpack bug.
+(2) It indicates a tensorpack bug.
 
 ### 4. Your environment:
 
-Paste the output of this command: `python -c 'import tensorpack.tfutils as u; print(u.collect_env_info())'`
-If this command failed, tell us your version of Python/TF/tensorpack.
+Paste the output of this command: `python -m tensorpack.tfutils.collect_env`
+If this command failed, also tell us your version of Python/TF/tensorpack.
 
 Note that:
 
