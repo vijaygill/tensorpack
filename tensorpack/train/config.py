@@ -2,8 +2,8 @@
 # File: config.py
 
 import os
-import tensorflow as tf
 
+from ..compat import tfv1
 from ..callbacks import (
     JSONWriter, MergeAllSummaries, MovingAverageSummary, ProgressBar, RunUpdateOps, ScalarPrinter, TFEventWriter)
 from ..dataflow.base import DataFlow
@@ -61,8 +61,7 @@ class TrainConfig(object):
                  model=None,
                  callbacks=None, extra_callbacks=None, monitors=None,
                  session_creator=None, session_config=None, session_init=None,
-                 starting_epoch=1, steps_per_epoch=None, max_epoch=99999,
-                 **kwargs):
+                 starting_epoch=1, steps_per_epoch=None, max_epoch=99999):
         """
         Args:
             dataflow (DataFlow):
@@ -238,6 +237,6 @@ class AutoResumeTrainConfig(TrainConfig):
         if not dir:
             return None
         path = os.path.join(dir, 'checkpoint')
-        if not tf.gfile.Exists(path):
+        if not tfv1.gfile.Exists(path):
             return None
         return SaverRestore(path)

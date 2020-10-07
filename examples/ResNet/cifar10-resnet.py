@@ -13,23 +13,21 @@ from tensorpack.tfutils.summary import add_moving_summary, add_param_summary
 from tensorpack.utils.gpu import get_num_gpu
 
 """
-CIFAR10 ResNet example. See:
-Deep Residual Learning for Image Recognition, arxiv:1512.03385
-This implementation uses the variants proposed in:
-Identity Mappings in Deep Residual Networks, arxiv:1603.05027
+CIFAR10 ResNet example. Reproduce the 2-GPU settings in:
+"Deep Residual Learning for Image Recognition", with following exceptions:
+* This implementation uses the architecture variant proposed in:
+  "Identity Mappings in Deep Residual Networks"
+* This model uses the whole training set instead of a train-val split.
 
-I can reproduce the results on 2 TitanX for
-n=5, about 7.1% val error after 67k steps (20.4 step/s)
-n=18, about 5.95% val error after 80k steps (5.6 step/s, not converged)
-n=30: a 182-layer network, about 5.6% val error after 51k steps (3.4 step/s)
-This model uses the whole training set instead of a train-val split.
+Results:
+* ResNet-110(n=18): about 5.9% val error after 64k steps (8.3 step/s)
 
 To train:
     ./cifar10-resnet.py --gpu 0,1
 """
 
-BATCH_SIZE = 128
-NUM_UNITS = None
+# paper uses 2 GPU with a total batch size of 128
+BATCH_SIZE = 64  # per-gpu batch size
 
 
 class Model(ModelDesc):
@@ -140,32 +138,40 @@ def get_data(train_or_test):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', help='comma separated list of GPU(s) to use.')
-    parser.add_argument('-n', '--num_units',
+    parser.add_argument('-n', '--num-units',
                         help='number of units in each stage',
-                        type=int, default=18)
+                        type=int, default=5)
     parser.add_argument('--load', help='load model for training')
+    parser.add_argument('--logdir', help='log directory')
     args = parser.parse_args()
-    NUM_UNITS = args.num_units
 
     if args.gpu:
         os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
-    logger.auto_set_dir()
+    if args.logdir:
+        logger.set_logger_dir(args.logdir)
+    else:
+        logger.auto_set_dir()
 
     dataset_train = get_data('train')
     dataset_test = get_data('test')
 
     config = TrainConfig(
-        model=Model(n=NUM_UNITS),
+        model=Model(n=args.num_units),
         dataflow=dataset_train,
         callbacks=[
             ModelSaver(),
             InferenceRunner(dataset_test,
                             [ScalarStats('cost'), ClassificationError('wrong_vector')]),
             ScheduledHyperParamSetter('learning_rate',
-                                      [(1, 0.1), (82, 0.01), (123, 0.001), (300, 0.0002)])
+                                      [(1, 0.1), (32, 0.01), (48, 0.001)])
         ],
-        max_epoch=400,
+        # ResNet Sec. 4.2:
+        # models are trained with a mini-batch size of 128 on two GPUs. We
+        # start with a learningrate of 0.1, divide it by 10 at 32k and 48k iterations,
+        # andterminate training at 64k iterations
+        steps_per_epoch=1000,
+        max_epoch=64,
         session_init=SmartInit(args.load),
     )
     num_gpu = max(get_num_gpu(), 1)

@@ -158,7 +158,11 @@ class SyncMultiGPUTrainerReplicated(SingleCostTrainer):
             are supposed to be in-sync).
             But this cheap operation may help prevent
             certain numerical issues in practice.
-            Note that in cases such as BatchNorm, the variables may not be in sync.
+
+            Note that in cases such as BatchNorm, the variables may not be in sync:
+            e.g., non-master worker may not maintain EMAs.
+
+            For benchmark, disable this option.
     """
 
     @map_arg(gpus=_int_to_range)
@@ -340,28 +344,19 @@ class HorovodTrainer(SingleCostTrainer):
     .. code-block:: bash
 
         # First, change trainer to HorovodTrainer(), then
-        CUDA_VISIBLE_DEVICES=0,1,2,3 NCCL_DEBUG=INFO mpirun -np 4 --output-filename mylog python train.py
+        CUDA_VISIBLE_DEVICES=0,1,2,3 NCCL_DEBUG=INFO horovodrun -np 4 --output-filename mylog python train.py
 
     To use for distributed training:
 
     .. code-block:: bash
 
         # First, change trainer to HorovodTrainer(), then
-        mpirun -np 8 -H server1:4,server2:4  \\
-            -bind-to none -map-by slot \\
-            --output-filename mylog -x NCCL_DEBUG=INFO -x LD_LIBRARY_PATH \\
+        horovodrun -np 8 -H server1:4,server2:4 --output-filename mylog \\
             python train.py
-        # Add other environment variables you need by -x, e.g. PYTHONPATH, PATH.
-        # If using all GPUs, you can always skip the `CUDA_VISIBLE_DEVICES` option.
-        # There are other MPI options that can potentially improve performance especially on special hardwares.
-
-    Horovod can also be launched without MPI. See
-    `its documentation <https://github.com/horovod/horovod#running-horovod>`_
-    for more details.
 
     Note:
         1. To reach the maximum speed in your system, there are many options to tune
-           for Horovod installation and in the MPI command line.
+           in Horovod installation, horovodrun arguments, and in the MPI command line.
            See Horovod docs for details.
 
         2. Due to a TF bug (#8136), you must not initialize CUDA context before the trainer starts training.
@@ -373,6 +368,10 @@ class HorovodTrainer(SingleCostTrainer):
 
             + MPI does not like `fork()`. If your code (e.g. dataflow) contains multiprocessing, it may cause problems.
             + MPI sometimes fails to kill all processes in the end. Be sure to check it afterwards.
+
+           The gloo backend is recommended though it may come with very minor slow down.
+           To use gloo backend, see
+           `horovod documentation <https://github.com/horovod/horovod#running-horovod>`_ for more details.
 
         4. Keep in mind that there is one process running the script per GPU, therefore:
 
@@ -403,7 +402,11 @@ class HorovodTrainer(SingleCostTrainer):
             Theoretically this is a no-op (because the variables
             are supposed to be in-sync).
             But this cheap operation may help prevent certain numerical issues in practice.
-            Note that in cases such as BatchNorm, the variables may not be in sync.
+
+            Note that in cases such as BatchNorm, the variables may not be in sync:
+            e.g., non-master worker may not maintain EMAs.
+
+            For benchmark, disable this option.
     """
 
     def __init__(self, average=True, compression=None):
