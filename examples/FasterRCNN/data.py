@@ -73,10 +73,12 @@ class TrainingDataPreprocessor:
     def __init__(self, cfg):
         self.cfg = cfg
         self.aug = imgaug.AugmentorList([
-            CustomResize(cfg.PREPROC.TRAIN_SHORT_EDGE_SIZE, cfg.PREPROC.MAX_SIZE)
-            , imgaug.Flip(horiz = True)
-#            , imgaug.Flip(vert = True)
-            , imgaug.RandomApplyAug(imgaug.Rotation(max_deg = 180.0, step_deg = 30.0, center_range = (0.5, 0.5)), prob = 0.5)
+#            imgaug.RandomApplyAug(imgaug.RandomResize( xrange = (0.8, 1.5), minimum = (cfg.PREPROC.TRAIN_SHORT_EDGE_SIZE[0], cfg.PREPROC.TRAIN_SHORT_EDGE_SIZE[0]), aspect_ratio_thres = 0.0 ), prob = 0.5),
+            imgaug.Flip(horiz = True, prob = 0.5),
+            imgaug.Flip(vert = True, prob = 0.5),
+            imgaug.RandomApplyAug(imgaug.Rotation(max_deg = 180.0, step_deg = 30.0, center_range = (0.5, 0.5)), prob = 0.5),
+            imgaug.RandomApplyAug(imgaug.Grayscale(keepshape = True), prob = 0.5),
+            CustomResize(cfg.PREPROC.TRAIN_SHORT_EDGE_SIZE, cfg.PREPROC.MAX_SIZE),
         ])
 
     def __call__(self, roidb):
