@@ -77,7 +77,9 @@ class TrainingDataPreprocessor:
             imgaug.Flip(horiz = True, prob = 0.5),
             imgaug.Flip(vert = True, prob = 0.5),
             imgaug.RandomApplyAug(imgaug.Rotation(max_deg = 180.0, step_deg = 30.0, center_range = (0.5, 0.5)), prob = 0.5),
-            imgaug.RandomApplyAug(imgaug.Grayscale(keepshape = True), prob = 0.5),
+            imgaug.RandomApplyAug(imgaug.Grayscale(keepshape = True), prob = 0.1),
+            imgaug.RandomApplyAug(imgaug.BrightnessScale((0.2, 1.0), clip = True), prob = 0.20),
+            imgaug.RandomApplyAug(imgaug.GaussianBlur(size_range = (0, 3), sigma_range = (0, 0), symmetric = True), prob = 0.1),
             CustomResize(cfg.PREPROC.TRAIN_SHORT_EDGE_SIZE, cfg.PREPROC.MAX_SIZE),
         ])
 
